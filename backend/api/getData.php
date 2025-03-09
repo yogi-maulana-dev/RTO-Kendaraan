@@ -14,7 +14,7 @@ if ($conn->connect_error) {
 }
 
 // Query untuk mengambil data
-$sql = "SELECT id, name FROM owners"; // Sesuaikan dengan tabel database
+$sql = "SELECT id, name, address,phone,email FROM owners"; // Sesuaikan dengan tabel database
 $result = $conn->query($sql);
 
 // Cek apakah query berhasil

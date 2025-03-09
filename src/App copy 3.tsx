@@ -28,11 +28,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     setFilteredUsers(
-      users.filter((user) =>
-        [user.name, user.phone].some(value =>
-          typeof value === "string" && value.toLowerCase().includes(search.toLowerCase())
-        )
-      )
+      users.filter((user) => user.name.toLowerCase().includes(search.toLowerCase()))
     );
   }, [search, users]);
 

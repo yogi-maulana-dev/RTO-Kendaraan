@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain, dialog } from "electron";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -32,7 +32,9 @@ function createWindow() {
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
     webPreferences: {
-      preload: path.join(__dirname, "preload.mjs"),
+      preload: path.join(__dirname, "preload.mjs"), // Pastikan path benar
+      contextIsolation: true, // Wajib diaktifkan untuk keamanan
+      enableRemoteModule: false, // Nonaktifkan remote module untuk keamanan
     },
   });
 
@@ -44,14 +46,21 @@ function createWindow() {
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
   } else {
-    // win.loadFile('dist/index.html')
     win.loadFile(path.join(RENDERER_DIST, "index.html"));
+  }
+
+  // Buka DevTools di mode pengembangan
+  if (VITE_DEV_SERVER_URL) {
+    win.webContents.openDevTools();
   }
 }
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
+// Handle dialog.showMessageBox
+ipcMain.handle("show-message-box", async (event, options) => {
+  return await dialog.showMessageBox(options);
+});
+
+// Quit when all windows are closed, except on macOS.
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();

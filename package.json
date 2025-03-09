@@ -6,15 +6,22 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
+    "start": "electron --disable-features=AutofillServerCommunication,PasswordImport,Translate,AutofillEnableAccountWalletStorage .",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@tailwindcss/vite": "^4.0.6",
+    "apexcharts": "^4.5.0",
     "axios": "^1.7.9",
+    "electron-reload": "^2.0.0-alpha.1",
     "mariadb": "^3.4.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-apexcharts": "^1.7.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^7.3.0",
+    "sweetalert2": "^11.17.2"
   },
   "devDependencies": {
     "@types/react": "^18.2.64",

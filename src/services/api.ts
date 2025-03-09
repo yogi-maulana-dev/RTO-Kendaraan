@@ -2,9 +2,43 @@ import axios from "axios";
 
 const BASE_URL = "http://127.0.0.1:8000/api"; // Gunakan ini sebagai base API
 
+// services/api.ts
+export const login = async (username: string, password: string) => {
+  try {
+    const response = await fetch(`${BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username, password }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: data.message || "Login failed",
+      };
+    }
+
+    localStorage.setItem("token", data.token);
+    return { success: true };
+  } catch (error) {
+    console.error("Login error:", error);
+    return {
+      success: false,
+      message: "Network error",
+    };
+  }
+};
+
 export interface User {
-  id: number;
+  id?: number;
   name: string;
+  address: string;
+  phone: string;
+  email: string;
 }
 
 // Ambil status database (cek apakah koneksi MySQL berjalan)
@@ -26,5 +60,50 @@ export const getUsers = async (): Promise<User[]> => {
   } catch (error) {
     console.error("Error fetching users:", error);
     return [];
+  }
+};
+
+// Tambah data pengguna baru
+
+// Fungsi untuk menambahkan user ke database
+export const insertUser = async (userData: User) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/insertData.php`, userData);
+    return response.data; // Harus mengembalikan { success: boolean, message: string }
+  } catch (error) {
+    console.error("Error saat menambahkan user:", error);
+    return { success: false, message: "Gagal menghubungi server" };
+  }
+};
+
+// Fungsi untuk mengupdate data pengguna
+export const updateUser = async (userData: User) => {
+  try {
+    const response = await axios.put(`${BASE_URL}/updateData.php`, userData);
+    return response.data; // Harus mengembalikan { success: boolean, message: string }
+  } catch (error) {
+    console.error("Error saat mengupdate user:", error);
+    return { success: false, message: "Gagal menghubungi server" };
+  }
+};
+
+// Hapus user berdasarkan ID
+export const deleteUser = async (
+  id: number
+): Promise<{ success: boolean; message?: string }> => {
+  try {
+    const response = await fetch(`${BASE_URL}/deleteData.php`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id }),
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error("Terjadi kesalahan saat menghapus data:", error);
+    return { success: false, message: "Gagal menghubungi server" };
   }
 };

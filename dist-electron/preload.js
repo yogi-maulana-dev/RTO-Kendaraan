@@ -1,22 +1,32 @@
 "use strict";
-const electron = require("electron");
-electron.contextBridge.exposeInMainWorld("ipcRenderer", {
+const { contextBridge, ipcRenderer } = require("electron");
+
+// Expose ipcRenderer methods
+contextBridge.exposeInMainWorld("ipcRenderer", {
   on(...args) {
     const [channel, listener] = args;
-    return electron.ipcRenderer.on(channel, (event, ...args2) => listener(event, ...args2));
+    return ipcRenderer.on(channel, (event, ...args2) =>
+      listener(event, ...args2)
+    );
   },
   off(...args) {
     const [channel, ...omit] = args;
-    return electron.ipcRenderer.off(channel, ...omit);
+    return ipcRenderer.off(channel, ...omit);
   },
   send(...args) {
     const [channel, ...omit] = args;
-    return electron.ipcRenderer.send(channel, ...omit);
+    return ipcRenderer.send(channel, ...omit);
   },
   invoke(...args) {
     const [channel, ...omit] = args;
-    return electron.ipcRenderer.invoke(channel, ...omit);
-  }
-  // You can expose other APTs you need here.
-  // ...
+    return ipcRenderer.invoke(channel, ...omit);
+  },
+});
+
+// Expose dialog.showMessageBox
+contextBridge.exposeInMainWorld("electron", {
+  dialog: {
+    showMessageBox: (options) =>
+      ipcRenderer.invoke("show-message-box", options),
+  },
 });
