@@ -1,20 +1,14 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
-const ProtectedRoute = () => {
-    const isAuthenticated = !!localStorage.getItem('token');
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+    const { isAuthenticated } = useAuth();
 
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
     }
 
-    return (
-        <div className="app-container">
-            <Navbar />
-            <div className="content-container">
-                <Outlet />
-            </div>
-        </div>
-    );
+    return children;
 };
 
 export default ProtectedRoute;

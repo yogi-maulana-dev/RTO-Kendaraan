@@ -3,14 +3,14 @@ import axios from "axios";
 const BASE_URL = "http://127.0.0.1:8000/api"; // Gunakan ini sebagai base API
 
 // services/api.ts
-export const login = async (username: string, password: string) => {
+export const login = async (email: string, password: string) => {
   try {
-    const response = await fetch(`${BASE_URL}/auth/login`, {
+    const response = await fetch(`${BASE_URL}/auth.php`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ email, password }), // Sesuaikan dengan field yang diharapkan backend
     });
 
     const data = await response.json();
@@ -22,8 +22,10 @@ export const login = async (username: string, password: string) => {
       };
     }
 
-    localStorage.setItem("token", data.token);
-    return { success: true };
+    return {
+      success: true,
+      token: data.token, // Sesuaikan dengan field response dari backend
+    };
   } catch (error) {
     console.error("Login error:", error);
     return {

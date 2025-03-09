@@ -14,7 +14,7 @@ include_once 'db.php';
 $data = json_decode(file_get_contents("php://input"));
 
 // Validasi input JSON
-if (!$data || !isset($data->username) || !isset($data->password)) {
+if (!$data || !isset($data->email) || !isset($data->password)) {
     http_response_code(400);
     echo json_encode([
         "success" => false,
@@ -23,19 +23,17 @@ if (!$data || !isset($data->username) || !isset($data->password)) {
     exit();
 }
 
-$username = trim($data->username);
+$email = trim($data->email);
 $password = trim($data->password);
 
 // Validasi input
 $errors = [];
 
-// Validasi username
-if (empty($username)) {
-    $errors[] = "Username harus diisi";
-} elseif (strlen($username) < 3) {
-    $errors[] = "Username minimal 3 karakter";
-} elseif (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
-    $errors[] = "Username hanya boleh mengandung huruf, angka, dan underscore";
+// Validasi email
+if (empty($email)) {
+    $errors[] = "Email harus diisi";
+} elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $errors[] = "Format email tidak valid";
 }
 
 // Validasi password
@@ -60,9 +58,9 @@ if (!empty($errors)) {
     exit();
 }
 
-// Cek apakah username sudah terdaftar
-$check_stmt = $conn->prepare("SELECT id FROM users WHERE username = ?");
-$check_stmt->bind_param("s", $username);
+// Cek apakah email sudah terdaftar
+$check_stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
+$check_stmt->bind_param("s", $email);
 $check_stmt->execute();
 $check_stmt->store_result();
 
@@ -70,7 +68,7 @@ if ($check_stmt->num_rows > 0) {
     http_response_code(409);
     echo json_encode([
         "success" => false,
-        "message" => "Username sudah digunakan"
+        "message" => "Email sudah digunakan"
     ]);
     exit();
 }
@@ -79,13 +77,13 @@ if ($check_stmt->num_rows > 0) {
 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
 // Insert ke database dengan prepared statement
-$insert_stmt = $conn->prepare("INSERT INTO users (username, password) VALUES (?, ?)");
-$insert_stmt->bind_param("ss", $username, $hashed_password);
+$insert_stmt = $conn->prepare("INSERT INTO users (email, password) VALUES (?, ?)");
+$insert_stmt->bind_param("ss", $email, $hashed_password);
 
 if ($insert_stmt->execute()) {
     // Dapatkan data user yang baru dibuat
     $new_user_id = $insert_stmt->insert_id;
-    $get_user_stmt = $conn->prepare("SELECT id, username FROM users WHERE id = ?");
+    $get_user_stmt = $conn->prepare("SELECT id, email FROM users WHERE id = ?");
     $get_user_stmt->bind_param("i", $new_user_id);
     $get_user_stmt->execute();
     $result = $get_user_stmt->get_result();

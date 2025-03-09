@@ -1,167 +1,39 @@
-import React, { useEffect, useState } from "react";
-import { getUsers, User, deleteUser, updateUser } from "./services/api";
-import Navbar from "./components/Navbar";
-import AddUserForm from "./components/AddUserForm";
-import EditUserForm from "./components/EditUserForm";
-import Swal from "sweetalert2";
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/Auth/ProtectedRoute';
+import Login from './components/Login';
+import Dashboard from './components/Dashboard/Dashboard';
+import Users from './components/Users/Users';
+import Navbar from './components/Navbar';
 
-const App: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState("");
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const usersPerPage = 5;
-
-  const fetchData = async () => {
-    setLoading(true);
-    const data = await getUsers();
-    setUsers(data);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    setFilteredUsers(
-      users.filter((user) =>
-        [user.name, user.phone].some(value =>
-          typeof value === "string" && value.toLowerCase().includes(search.toLowerCase())
-        )
-      )
-    );
-  }, [search, users]);
-
-  const handleDeleteUser = async (id: number) => {
-    const confirmation = await Swal.fire({
-      title: "Apakah Anda yakin?",
-      text: "Data ini akan dihapus secara permanen!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Ya, hapus!",
-      cancelButtonText: "Batal",
-    });
-
-    if (!confirmation.isConfirmed) return;
-
-    const result = await deleteUser(id);
-    if (result.success) {
-      await Swal.fire("Sukses", "Data berhasil dihapus!", "success");
-      fetchData();
-    } else {
-      Swal.fire("Gagal", result.message || "Terjadi kesalahan!", "error");
-    }
-  };
-
-  const handleEditUser = (user: User) => {
-    setEditingUser(user);
-  };
-
-  const handleUpdateUser = async (updatedUser: User) => {
-    const result = await updateUser(updatedUser);
-    if (result.success) {
-      await Swal.fire("Sukses", "Data berhasil diperbarui!", "success");
-      setEditingUser(null);
-      fetchData();
-    } else {
-      Swal.fire("Gagal", result.message || "Terjadi kesalahan!", "error");
-    }
-  };
-
-  const indexOfLastUser = currentPage * usersPerPage;
-  const indexOfFirstUser = indexOfLastUser - usersPerPage;
-  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
-  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
-
+function App() {
   return (
-    <div>
-      <Navbar />
-      <div className="container mx-auto max-w-7xl p-4 md:p-6 mt-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-          <button onClick={() => setShowAddForm(!showAddForm)} className="bg-green-500 text-white px-4 py-2 rounded-md">
-            {showAddForm ? "Tutup Form" : "Tambah Data"}
-          </button>
-          <input
-            type="text"
-            placeholder="Cari nama..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="p-2 border rounded-md w-full md:w-64"
+    <AuthProvider>
+      <Router>
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
           />
-        </div>
-
-        {showAddForm && <AddUserForm onUserAdded={() => { fetchData(); setShowAddForm(false); }} />}
-
-        {editingUser && (
-          <EditUserForm user={editingUser} onUpdateUser={handleUpdateUser} onCancel={() => setEditingUser(null)} />
-        )}
-
-        <h2 className="text-2xl font-bold mb-4 text-blue-600">Daftar Pengguna</h2>
-        {loading ? (
-          <p className="text-gray-600">Memuat data...</p>
-        ) : currentUsers.length > 0 ? (
-          <>
-            <table className="min-w-full bg-white">
-              <thead className="bg-blue-600 text-white">
-                <tr>
-                  <th className="px-6 py-3">ID</th>
-                  <th className="px-6 py-3">Nama</th>
-                  <th className="px-6 py-3">Alamat</th>
-                  <th className="px-6 py-3">No. HP</th>
-                  <th className="px-6 py-3">Email</th>
-                  <th className="px-6 py-3">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentUsers.map((user) => (
-                  <tr key={user.id} className="border-t">
-                    <td className="px-6 py-4">{user.id}</td>
-                    <td className="px-6 py-4">{user.name}</td>
-                    <td className="px-6 py-4">{user.address}</td>
-                    <td className="px-6 py-4">{user.phone}</td>
-                    <td className="px-6 py-4">{user.email}</td>
-                    <td className="px-6 py-4">
-                      <button onClick={() => handleEditUser(user)} className="bg-blue-500 text-white px-3 py-1 rounded-md">
-                        Edit
-                      </button>
-                      <button onClick={() => handleDeleteUser(user.id!)} className="bg-red-500 text-white px-3 py-1 rounded-md ml-2">
-                        Hapus
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="flex justify-center mt-4">
-              <button
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="bg-gray-300 px-3 py-1 rounded-md mx-2"
-              >
-                Prev
-              </button>
-              <span>Halaman {currentPage} dari {totalPages}</span>
-              <button
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="bg-gray-300 px-3 py-1 rounded-md mx-2"
-              >
-                Next
-              </button>
-            </div>
-          </>
-        ) : (
-          <p>Tidak ada data tersedia.</p>
-        )}
-      </div>
-    </div>
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute>
+                <Users />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
-};
+}
 
 export default App;
